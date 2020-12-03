@@ -226,7 +226,7 @@ public class ClhAdvertise {
             arr[0]=arr[1] = 0;
             int sounddata=ByteBuffer.wrap(arr).getInt();
             if (sounddata>32767) sounddata=sounddata-65535;
-            //Log.i(LOG_TAG,"sound data:"+sounddata);
+            Log.i(LOG_TAG,"sound data:"+sounddata);
 
             if(mSoundcount++==100)
             {//wait 100 dataset to reduce the load, update the sound data to advertising list

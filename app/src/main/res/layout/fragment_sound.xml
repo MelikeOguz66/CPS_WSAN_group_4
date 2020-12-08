@@ -133,14 +133,14 @@
                         app:layout_constraintTop_toTopOf="parent">
 
                         <ImageView
-                            android:importantForAccessibility="no"
                             android:id="@+id/thingyOverlay"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
                             android:alpha="0.0"
                             android:background="@drawable/ic_device_bg_grey"
-                            android:scaleType="center"/>
+                            android:importantForAccessibility="no"
+                            android:scaleType="center" />
 
                         <ImageView
                             android:importantForAccessibility="no"

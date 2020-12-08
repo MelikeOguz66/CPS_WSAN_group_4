@@ -1741,6 +1741,7 @@ public class ThingySdkManager {
                 final ThingyConnection thingyConnection = mBinder.getThingyConnection(device);
                 if (thingyConnection != null) {
                     thingyConnection.enableThingyMicrophoneNotifications(enable);
+//                    Log.i("Martijn", "Started microphone in ThingySdkManager on device " + device.getName());
                 }
             }
         }

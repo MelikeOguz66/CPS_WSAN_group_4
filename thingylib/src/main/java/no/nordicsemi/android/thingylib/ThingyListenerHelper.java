@@ -44,6 +44,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.util.HashMap;
@@ -96,6 +98,7 @@ public class ThingyListenerHelper {
                 return;
 
             final String action = intent.getAction();
+
             switch (action) {
                 case ThingyUtils.ACTION_DEVICE_CONNECTED:
                     if(globalListener != null) {
@@ -325,6 +328,7 @@ public class ThingyListenerHelper {
                     }
                     break;
                 case ThingyUtils.MICROPHONE_NOTIFICATION:
+                    Log.i("Martijn", "ThingyListenerHelper.java case ThingyUtils.MICROPHONE_NOTIFICATION");
                     final byte [] data = intent.getExtras().getByteArray(ThingyUtils.EXTRA_DATA_PCM);
                     if(globalListener != null) {
                         globalListener.onMicrophoneValueChangedEvent(device, data);

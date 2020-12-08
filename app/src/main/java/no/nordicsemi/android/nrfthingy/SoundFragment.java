@@ -119,22 +119,33 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
     private boolean mStartRecordingAudio = false;
     private boolean mStartPlayingAudio = false;
 
+    private boolean testMartijn = false;
+
     private ThingyListener mThingyListener = new ThingyListener() {
         private Handler mHandler = new Handler();
 
         @Override
         public void onDeviceConnected(BluetoothDevice device, int connectionState) {
+            Log.i("Martijn", "A new device connected: " + device.getName() + " and has connection state" + connectionState);
             mThingySdkManager.setConstantLedMode(device, 0, 0, 255); // device is connected, turn blue
+            if (mThingySdkManager.isConnected(device)) {
+//                ThingyListenerHelper.registerThingyListener(getContext(), mThingyListener, device);
+//                LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mAudioRecordBroadcastReceiver, createAudioRecordIntentFilter(device.getAddress()));
+                mThingySdkManager.setConstantLedMode(device, 0, 0, 255); //indicate the thingy is recording
+//                Log.i("Martijn", "Registered thingy listener for device " + device.getName());
+            } else {
+                Utils.showToast(getActivity(), "Please configureThingy to REPlACED DEViczE nAME before you proceed!");
+            }
         }
 
         @Override
         public void onDeviceDisconnected(BluetoothDevice device, int connectionState) {
-            if (device.equals(mDevice)) { // TODO do we want to stop recording when one device disconneted?
+//            if (device.equals(mDevice)) { // TODO do we want to stop recording when one device disconneted?
                 stopRecording();
                 stopMicrophoneOverlayAnimation();
                 stopThingyOverlayAnimation();
                 mStartPlayingAudio = false;
-            }
+//            }
         }
 
         @Override
@@ -168,7 +179,12 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
         @Override
         public void onButtonStateChangedEvent(BluetoothDevice bluetoothDevice, int buttonState) {
-            Log.i("Martijn", "Listened in SoundFragment, now pressed the button on device" + bluetoothDevice.getName());
+            Log.i("Martijn", "Listened in SoundFragment, now pressed the button on device" + bluetoothDevice.getName() + " to state " + buttonState);
+            if (buttonState == 1){
+                testMartijn = !testMartijn;
+            }
+            Log.i("Martijn", "Now the testMartijn variable is " + testMartijn);
+
         }
 
         @Override
@@ -239,7 +255,6 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                         @Override
                         public void run() {
                             mVoiceVisualizer.draw(data);
-
                         }
                     });
 
@@ -248,11 +263,31 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                     if( mStartPlayingAudio = true)
                          mClhAdvertiser.addAdvSoundData(data);
 
-                    Log.i("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
-                    //TODO process thingys sound data here
-                    //End PSG edit No.1
 
+                    //TODO Melike process audio data
+                    StringBuilder soundData = new StringBuilder();
+                    for(int i = 0; i < 512; i++){
+                        soundData.append(data[i]);
+                        soundData.append(" ");
+                    }
+                    Log.i("Martijn", "Sound data: " + soundData);
+
+
+
+                    Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
+
+                    if(testMartijn){
+                        Log.i("Martijn", "An event happened on device " + bluetoothDevice.getName() + ", thus setting indication led");
+                        mThingySdkManager.setConstantLedMode(bluetoothDevice, 0,255,0);
+                        testMartijn = false;
+                    }
+
+
+                }else{
+                    Log.e("Martijn", "onMicrophoneValueChangedEvent, but data length is 0");
                 }
+            }else{
+                Log.e("Martijn", "onMicrophoneValueChangedEvent, but data is null");
             }
         }
     };
@@ -396,13 +431,15 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
         mMicrophone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mThingySdkManager.isConnected(mDevice)) {
-                    if (!mStartRecordingAudio) {
-                        checkMicrophonePermissions();
-                    } else {
-                        stopRecording();
-                    }
-                }
+                Log.i("Martijn", "There are " + mThingySdkManager.getConnectedDevices().size() + " connected devices, namely: " + mThingySdkManager.getConnectedDevices().toString());
+                //TODO disabled this working, don't need it
+//                if (mThingySdkManager.isConnected(mDevice)) {
+//                    if (!mStartRecordingAudio) {
+//                        checkMicrophonePermissions();
+//                    } else {
+//                        stopRecording();
+//                    }
+//                }
             }
         });
 
@@ -412,7 +449,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
             @Override
             public void onClick(View v) {
                 for(BluetoothDevice device : mThingySdkManager.getConnectedDevices()){
-                    Log.i("Martijn", "I think device " + device.getName() + " is connected thus trying to enable/disable microphone");
+//                    Log.i("Martijn", "I think device " + device.getName() + " is connected thus trying to enable/disable microphone");
                     if (mThingySdkManager.isConnected(device)) {
                         if (!mStartPlayingAudio) {
                             mThingySdkManager.enableThingyMicrophone(device, true);
@@ -431,9 +468,11 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                 if (!mStartPlayingAudio) {
                     mStartPlayingAudio = true;
                     startThingyOverlayAnimation();
+                    Log.i("Martijn", "Started recording on all thingies now");
                 } else{
                     mStartPlayingAudio = false;
                     stopThingyOverlayAnimation();
+                    Log.i("Martijn", "Stopped recording on all thingies now");
                 }
             }
         });
@@ -465,6 +504,8 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
         if (savedInstanceState != null) {
             mStartPlayingAudio = savedInstanceState.getBoolean(AUDIO_PLAYING_STATE);
             mStartRecordingAudio = savedInstanceState.getBoolean(AUDIO_RECORDING_STATE);
+
+            Log.i("Martijn", "savedInstanceState mStartPlayingAudio is " + mStartPlayingAudio);
 
             if (mStartPlayingAudio) {
                 startThingyOverlayAnimation();
@@ -625,31 +666,27 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
     @Override
     public void onResume() {
         super.onResume();
-        Log.i("Martijn", "onResume() of soundfragment is called");
+        Log.i("Martijn", "onResume() of soundfragment is called while " + mThingySdkManager.getConnectedDevices().size() + " devices are connected");
         for(BluetoothDevice device : mThingySdkManager.getConnectedDevices()){
             if (mThingySdkManager.isConnected(device)) {
                 ThingyListenerHelper.registerThingyListener(getContext(), mThingyListener, device);
+                LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mAudioRecordBroadcastReceiver, createAudioRecordIntentFilter(device.getAddress()));
                 Log.i("Martijn", "Registered thingy listener for device " + device.getName());
             } else {
                 Utils.showToast(getActivity(), "Please configureThingy to REPlACED DEViczE nAME before you proceed!");
             }
         }
+
         //ThingyListenerHelper.registerThingyListener(getContext(), mThingyListener, mDevice);
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mAudioRecordBroadcastReceiver, createAudioRecordIntentFilter(mDevice.getAddress()));
+        //LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mAudioRecordBroadcastReceiver, createAudioRecordIntentFilter(mDevice.getAddress()));
     }
 
     // Martijn
     @Override
     public void onPause() {
         super.onPause();
-        for(BluetoothDevice device : mThingySdkManager.getConnectedDevices()){
-            if (mThingySdkManager.isConnected(device)) {
-                ThingyListenerHelper.unregisterThingyListener(getContext(), mThingyListener);
-            } else {
-                Utils.showToast(getActivity(), "Please configureThingy to REPlACED DEViczE nAME before you proceed!");
-            }
-        }
-//        ThingyListenerHelper.unregisterThingyListener(getContext(), mThingyListener);
+        Log.i("Martijn", "onPause() of soundfragment is called");
+        ThingyListenerHelper.unregisterThingyListener(getContext(), mThingyListener);
         LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mAudioRecordBroadcastReceiver);
         mVoiceVisualizer.stopDrawing();
     }
@@ -657,6 +694,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
     @Override
     public void onStop() {
         super.onStop();
+        Log.i("Martijn", "onStop() of soundfragment is called");
         stopRecording();
         stopThingyOverlayAnimation();
     }

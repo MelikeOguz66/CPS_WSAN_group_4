@@ -293,36 +293,39 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
     private void analyzeSoundData(byte[] data) {
         int PRECISSION = 4;
-        float[] mCurrentBuffer = new float[2 * 512 / PRECISSION];// 512 samples, each has X and Y value, each point (but fist and last) must be doubled: A->B, B->C, C->D etc.
 
-        int mWidth = 100;
         int mHeight = 100;
 
-
-        final float[] buffer = mCurrentBuffer;
+        final float[] buffer = new float[2 * 512 / PRECISSION];// 512 samples, each has X and Y value, each point (but fist and last) must be doubled: A->B, B->C, C->D etc.;
         final int length = data.length / PRECISSION;
-        final float stepHoriz = (float) mWidth / length;
         final float stepVert = (float) mHeight / Short.MAX_VALUE;
 
+        //TODO here we can calculate average value of the sound, if we sum the absolute values and divded by amounts of elements;
         int out = 0;
-        for (int i = 0; i < length; i += 2) {
-            buffer[out] = buffer[out + 2] = stepHoriz * i;
-            buffer[out + 1] = buffer[out + 3] = mHeight + stepVert * readShort(data, i * PRECISSION);
-            out += i > 0 ? 4 : 2;
+        int amount;
+        for (int i = 0; i < length; i +=1) {
+            buffer[i] = stepVert * readShort(data, i * PRECISSION);
+            amount = i;
         }
 
-        buffer[out] = mWidth;
-        buffer[out + 1] = mHeight + stepVert * readShort(data, (length - 1) * PRECISSION);
 
         StringBuilder msg = new StringBuilder();
+        msg.append("converted sound data: ");
         for(float d : buffer){
             msg.append(d);
             msg.append(" ");
 
         }
+        StringBuilder msg2 = new StringBuilder();
+        msg2.append("raw sound data: ");
+        for(float d : data){
+            msg2.append(d);
+            msg2.append(" ");
+        }
 
-        msg.append("converted sound data");
         Log.i("Martijn", msg.toString());
+        Log.i("Martijn", msg2.toString());
+
     }
 
     private static short readShort(final byte[] data, final int start) {

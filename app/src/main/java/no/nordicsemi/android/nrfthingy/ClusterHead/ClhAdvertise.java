@@ -12,6 +12,7 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -272,6 +273,7 @@ public class ClhAdvertise {
             sending_queue = new LinkedBlockingQueue<ClhAdvertisedData>();
         }
         public void run() {
+            Random random = new Random();
             while (true) {
                 if (!sending_queue.isEmpty()) {
                     try {
@@ -285,6 +287,7 @@ public class ClhAdvertise {
                             Thread.sleep(5000); //sleep 5 seconds
                             if (last_ack_received == tosend.getPacketID()) {
                                 gotack = true;
+                                last_ack_received = 17;
                             }
                         }
 

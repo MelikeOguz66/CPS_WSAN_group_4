@@ -205,10 +205,10 @@ public class ClhScan {
                         life counter: time of the packet lived in history list
           --------------*/
 
-        if (ClhScanHistoryArray.indexOfKey(manufacturerData.keyAt(0))<0)
+        if (ClhScanHistoryArray.indexOfKey(manufacturerData.keyAt(0))<0 || clhAdvData.getThingyDataType() == ((byte) 2))
         {//not yet received
             //history not yet full, update new "unique packet ID" to history list, reset life counter
-            if(ClhScanHistoryArray.size()<ClhConst.SCAN_HISTORY_LIST_SIZE)
+            if(ClhScanHistoryArray.size()<ClhConst.SCAN_HISTORY_LIST_SIZE && clhAdvData.getThingyDataType() != ((byte) 2))
             {
                 ClhScanHistoryArray.append(manufacturerData.keyAt(0),0);
             }
@@ -225,6 +225,7 @@ public class ClhScan {
                 ack.setThingyDataType((byte) 2);
                 mClhAdvertiser.addAdvPacketToBuffer(ack, true);
                 mClhProcessData.addProcessPacketToBuffer(clhAdvData);
+                Log.i(LOG_TAG, "sending ack to" + clhAdvData.getSourceID());
                 Log.i(LOG_TAG, "Add data to process list, len:" + mClhProcDataList.size());
             }
             else if (clhAdvData.getThingyDataType() != 2){//normal CLuster Head (ID 1..127) add data to advertising list to forward

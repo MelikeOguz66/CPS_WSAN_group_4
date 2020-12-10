@@ -41,6 +41,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ParcelUuid;
@@ -59,15 +60,18 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
 import no.nordicsemi.android.nrfthingy.R;
+import no.nordicsemi.android.nrfthingy.thingy.ThingyService;
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat;
 import no.nordicsemi.android.support.v18.scanner.ScanCallback;
 import no.nordicsemi.android.support.v18.scanner.ScanFilter;
 import no.nordicsemi.android.support.v18.scanner.ScanResult;
 import no.nordicsemi.android.support.v18.scanner.ScanSettings;
+import no.nordicsemi.android.thingylib.ThingySdkManager;
 
 /**
  * ScannerFragment class scan required BLE devices and shows them in a list. This class scans and filter devices with given BLE Service UUID which may be null. It contains a
@@ -87,6 +91,11 @@ public class ScannerFragment extends DialogFragment {
     private DeviceListAdapter mAdapter;
     private Handler mHandler = new Handler();
     private Button mScanButton;
+    private ThingySdkManager mThingySdkManager = ThingySdkManager.getInstance();
+
+    //Not sure if this is the correct way to get it
+    //private static ThingySdkManager mThingySdkManager = ThingySdkManager.getInstance();
+    ////////////////////////////////////////////////////////////
 
     private ParcelUuid mUuid;
     private boolean mIsScanning = false;
@@ -251,6 +260,23 @@ public class ScannerFragment extends DialogFragment {
                 troubleshootView.setVisibility(View.GONE);
             }
             mAdapter.update(results);
+
+            //sorts the scanresults on highest signal strength
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                results.sort(new Comparator<ScanResult>() {
+                    @Override
+                    public int compare(ScanResult scanResult, ScanResult t1) {
+                        return t1.getRssi() - scanResult.getRssi();
+                    }
+                });
+            }
+
+            //connects a maximum of 4 highest signal strength thingies
+            //makes sure that there are no more than 4 connected at the same time
+            int initConnected = mThingySdkManager.getConnectedDevices().size();
+            for(int i=0; i+initConnected<4 && i < results.size(); i++) {
+                mThingySdkManager.connectToThingy(getContext(), results.get(i).getDevice(), ThingyService.class);
+            }
         }
 
         @Override

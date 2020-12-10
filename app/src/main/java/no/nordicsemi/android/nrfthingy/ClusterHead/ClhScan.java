@@ -228,6 +228,7 @@ public class ClhScan {
                 Log.i(LOG_TAG, "Add data to process list, len:" + mClhProcDataList.size());
             }
             else if (clhAdvData.getThingyDataType() != 2){//normal CLuster Head (ID 1..127) add data to advertising list to forward
+
                 byte hops = clhAdvData.getHopCounts();
                 hops++;
                 //if the source and packet id == same then dont send

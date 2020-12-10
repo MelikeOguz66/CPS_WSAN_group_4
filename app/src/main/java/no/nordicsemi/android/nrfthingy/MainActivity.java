@@ -234,6 +234,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         public void onServiceDiscoveryCompleted(BluetoothDevice device) {
             updateBatteryLevelVisibility(View.VISIBLE);
             onServiceDiscoveryCompletion(device);
+            //we can display connected devices with this
+            mThingySdkManager.getConnectedDevices();
+            /////////////////////////////////////////////
             checkForFwUpdates();
         }
 

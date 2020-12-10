@@ -273,7 +273,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                     analyzeSoundData(data);
 
 
-                    Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
+//                    Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
 
                     if(testMartijn){
                         Log.i("Martijn", "An event happened on device " + bluetoothDevice.getName() + ", thus setting indication led");
@@ -293,14 +293,10 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
     private void analyzeSoundData(byte[] data) {
         int PRECISSION = 4;
-        float[] mPointsBuffer = new float[2 * 512 / PRECISSION]; // 512 samples, each has X and Y value, each point (but fist and last) must be doubled: A->B, B->C, C->D etc.
-        float[] mPointsBuffer2 = new float[2 * 512 / PRECISSION];
-        float[] mCurrentBuffer = new float[2 * 512 / PRECISSION];
-        float[] mPoints;
-        final Object mLock = new Object();
+        float[] mCurrentBuffer = new float[2 * 512 / PRECISSION];// 512 samples, each has X and Y value, each point (but fist and last) must be doubled: A->B, B->C, C->D etc.
 
         int mWidth = 100;
-        int mHeight = 30;
+        int mHeight = 100;
 
 
         final float[] buffer = mCurrentBuffer;
@@ -318,9 +314,15 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
         buffer[out] = mWidth;
         buffer[out + 1] = mHeight + stepVert * readShort(data, (length - 1) * PRECISSION);
 
-        mCurrentBuffer = mCurrentBuffer == mPointsBuffer ? mPointsBuffer2 : mPointsBuffer;
+        StringBuilder msg = new StringBuilder();
+        for(float d : buffer){
+            msg.append(d);
+            msg.append(" ");
 
-        Log.i("Martijn", buffer.toString());
+        }
+
+        msg.append("converted sound data");
+        Log.i("Martijn", msg.toString());
     }
 
     private static short readShort(final byte[] data, final int start) {

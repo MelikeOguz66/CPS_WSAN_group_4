@@ -67,12 +67,15 @@ public class ClhScan {
             }
 
             //setting
-            ScanSettings ClhScanSettings = new ScanSettings.Builder()
-                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                    .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-                    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-                    .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
-                    .build();
+            ScanSettings ClhScanSettings = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                ClhScanSettings = new ScanSettings.Builder()
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                        .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                        .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                        .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
+                        .build();
+            }
 
             //set filter: filter name
             ScanFilter filter = new ScanFilter.Builder()
@@ -170,6 +173,7 @@ public class ClhScan {
     public void processScanData(SparseArray<byte[]> manufacturerData) {
 
 
+
         if(manufacturerData==null)
         {
             Log.i(LOG_TAG, "no Data");
@@ -178,8 +182,17 @@ public class ClhScan {
         }
         int receiverID=manufacturerData.keyAt(0);
 
+        ClhAdvertisedData clhAdvData = new ClhAdvertisedData();
+
+        //add receive data to Advertise list or Process List
+        //Log.i(LOG_TAG," add history"+ (receiverID>>8)+ "  "+(receiverID&0xFF) );
+        //Log.i(LOG_TAG," manufacturer value"+ Arrays.toString(manufacturerData.valueAt(0)) );
+
+        clhAdvData.parcelAdvData(manufacturerData,0);
+
+
         //reflected data (received cluster head ID = device Clh ID) -> skip
-        if(mClhID==(receiverID>>8))
+        if(mClhID==(receiverID>>8) && clhAdvData.getThingyDataType() != 2) //make sure it is not a ACK
         {
             Log.i(LOG_TAG,"reflected data, mClhID "+mClhID +", recv:" +(receiverID>>8) );
             return;
@@ -199,23 +212,35 @@ public class ClhScan {
             {
                 ClhScanHistoryArray.append(manufacturerData.keyAt(0),0);
             }
-            ClhAdvertisedData clhAdvData = new ClhAdvertisedData();
 
-            //add receive data to Advertise list or Process List
-            //Log.i(LOG_TAG," add history"+ (receiverID>>8)+ "  "+(receiverID&0xFF) );
-            //Log.i(LOG_TAG," manufacturer value"+ Arrays.toString(manufacturerData.valueAt(0)) );
-
-            clhAdvData.parcelAdvData(manufacturerData,0);
             if(mIsSink)
             {//if this Cluster Head is the Sink node (ID=0), add data to waiting process list
-                    mClhProcessData.addProcessPacketToBuffer(clhAdvData);
-                    Log.i(LOG_TAG, "Add data to process list, len:" + mClhProcDataList.size());
+                //TODO SEND ACK
+                ClhAdvertisedData ack = new ClhAdvertisedData();
+                ack.setDestId(clhAdvData.getDestinationID());
+                ack.setPacketID((byte) 0);
+                ack.setSourceID((byte) 0);
+                ack.setHopCount((byte) 0);
+                ack.setThingyId(clhAdvData.getThingyId());
+                ack.setThingyDataType((byte) 2);
+                mClhAdvertiser.addAdvPacketToBuffer(ack, true);
+                mClhProcessData.addProcessPacketToBuffer(clhAdvData);
+                Log.i(LOG_TAG, "Add data to process list, len:" + mClhProcDataList.size());
             }
-            else {//normal CLuster Head (ID 0..127) add data to advertising list to forward
-                    mClhAdvertiser.addAdvPacketToBuffer(clhAdvData,false);
+            else if (clhAdvData.getThingyDataType() != 2){//normal CLuster Head (ID 1..127) add data to advertising list to forward
+                byte hops = clhAdvData.getHopCounts();
+                hops++;
+                //if the source and packet id == same then dont send
+
+                if (hops < 5) {
+                    mClhAdvertiser.addAdvPacketToBuffer(clhAdvData, false);
                     Log.i(LOG_TAG, "Add data to advertised list, len:" + mClhAdvDataList.size());
                     Log.i(LOG_TAG, "Advertise list at " + (mClhAdvDataList.size() - 1) + ":"
                             + Arrays.toString(mClhAdvDataList.get(mClhAdvDataList.size() - 1).getParcelClhData()));
+                }
+            } else { //its an ack ment for me :D
+                //TODO notify the tread
+                mClhAdvertiser.setLast_ack_received(clhAdvData.getPacketID());
             }
         }
     }

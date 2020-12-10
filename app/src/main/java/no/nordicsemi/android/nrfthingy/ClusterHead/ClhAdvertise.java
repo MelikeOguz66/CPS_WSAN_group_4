@@ -13,6 +13,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class ClhAdvertise {
@@ -58,6 +60,19 @@ public class ClhAdvertise {
     private byte mCurrentPacketID= (byte) 1;
     private ArrayList<ClhAdvertisedData >mClhAdvDataList;
 
+    //NEW PARAMS
+    private int last_ack_received = -1;
+    private BlockingQueue<ClhAdvertisedData> sending_queue;
+
+    //GETTER SETTER
+    public int getLast_ack_received() {
+        return last_ack_received;
+    }
+
+    public void setLast_ack_received(int last_ack_received) {
+        this.last_ack_received = last_ack_received;
+    }
+
     public ClhAdvertise(){//constructor with no params
         mClhAdvDataList= new ArrayList<ClhAdvertisedData>(MAX_ADVERTISE_LIST_ITEM);
     }
@@ -66,6 +81,7 @@ public class ClhAdvertise {
     public ClhAdvertise(ArrayList<ClhAdvertisedData> clhAdvDataList, int maxAdvAllowable){
         mMaxAdvAllowable=maxAdvAllowable;
         mClhAdvDataList=clhAdvDataList;
+        new SendThread().start();
     }
 
 
@@ -237,7 +253,12 @@ public class ClhAdvertise {
                 advData.setThingyId((byte) 1);
                 advData.setHopCount((byte) 0);
                 advData.setSoundPower(sounddata);
-                addAdvPacketToBuffer(advData,true);
+                try {
+                    sending_queue.put(advData);
+                }catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                //addAdvPacketToBuffer(advData,true);
                 ClhAdvertisedData temp=mClhAdvDataList.get(mClhAdvDataList.size()-1);
                 Log.i(LOG_TAG,"add new sound data:"+ Arrays.toString( temp.getParcelClhData()));
                 mSoundcount=0;
@@ -245,6 +266,33 @@ public class ClhAdvertise {
         }
     }
 
+    private class SendThread extends Thread {
+        public SendThread () {
+            sending_queue = new LinkedBlockingQueue<ClhAdvertisedData>();
+        }
+        public void run() {
+            while (true) {
+                if (!sending_queue.isEmpty()) {
+                    try {
+                        ClhAdvertisedData tosend = sending_queue.take();
+                        boolean gotack = false;
+                        int sendNtimes = 0;
+                        while (!gotack && sendNtimes < 3 ) {
+                            sendNtimes++;
+                            addAdvPacketToBuffer(tosend, true);
+                            Thread.sleep(1000);
+                            if (last_ack_received == tosend.getPacketID()) {
+                                gotack = true;
+                            }
+                        }
+
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
     /*----------
  Start advertising "data"
  @param
@@ -339,7 +387,7 @@ public class ClhAdvertise {
 
         return ClhErrors.ERROR_CLH_NO;
     }
-
+    //TODO IMPLEMENT FOR SENDERTHEAD?
     public void stopAdvertiseClhData()
     {
 

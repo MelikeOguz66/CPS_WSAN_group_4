@@ -241,6 +241,7 @@ public class ClhScan {
             } else { //its an ack ment for me :D
                 //TODO notify the tread
                 mClhAdvertiser.setLast_ack_received(clhAdvData.getPacketID());
+                Log.i(LOG_TAG, "Got a ack for me ;D");
             }
         }
     }

@@ -650,9 +650,12 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                             Log.i(LOG_TAG, "Add array:" + Arrays.toString(clh.getParcelClhData()));
                             Log.i(LOG_TAG, "Array new size:" + mClhAdvertiser.getAdvertiseList().size());
                         }
-                      }
+                      } else if (mClhID == 1) {
+                        //dont do anything
+                    } else {
+                        mClhAdvertiser.nextAdvertisingPacket(); //start advertising
+                    }
 
-                    mClhAdvertiser.nextAdvertisingPacket(); //start advertising
                 }
                 else
                 {//stop advertising

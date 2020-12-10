@@ -259,8 +259,9 @@ public class ClhAdvertise {
                     e.printStackTrace();
                 }
                 //addAdvPacketToBuffer(advData,true);
-                ClhAdvertisedData temp=mClhAdvDataList.get(mClhAdvDataList.size()-1);
-                Log.i(LOG_TAG,"add new sound data:"+ Arrays.toString( temp.getParcelClhData()));
+
+                //ClhAdvertisedData temp=mClhAdvDataList.get(mClhAdvDataList.size()-1);
+                Log.i(LOG_TAG,"add new sound data:");
                 mSoundcount=0;
             }
         }
@@ -279,8 +280,9 @@ public class ClhAdvertise {
                         int sendNtimes = 0;
                         while (!gotack && sendNtimes < 3 ) {
                             sendNtimes++;
+                            tosend.setPacketID((byte) sendNtimes);      //set packetid to be the transmission
                             addAdvPacketToBuffer(tosend, true);
-                            Thread.sleep(1000);
+                            Thread.sleep(5000); //sleep 5 seconds
                             if (last_ack_received == tosend.getPacketID()) {
                                 gotack = true;
                             }
@@ -318,7 +320,7 @@ public class ClhAdvertise {
         Log.i(LOG_TAG,"Start Start Advertizer func");
 
         AdvertiseSettings.Builder advSettingsBuilder = new AdvertiseSettings.Builder()
-                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_LOW)
+                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
                 .setConnectable(false);
         //set operation mode: low energy to latency
         switch (settings[ADV_SETTING_BYTE_MODE]) {

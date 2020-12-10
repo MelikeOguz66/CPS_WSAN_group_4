@@ -131,7 +131,6 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
             if (mThingySdkManager.isConnected(device)) {
 //                ThingyListenerHelper.registerThingyListener(getContext(), mThingyListener, device);
 //                LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mAudioRecordBroadcastReceiver, createAudioRecordIntentFilter(device.getAddress()));
-                mThingySdkManager.setConstantLedMode(device, 0, 0, 255); //indicate the thingy is recording
 //                Log.i("Martijn", "Registered thingy listener for device " + device.getName());
             } else {
                 Utils.showToast(getActivity(), "Please configureThingy to REPlACED DEViczE nAME before you proceed!");
@@ -140,12 +139,12 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
         @Override
         public void onDeviceDisconnected(BluetoothDevice device, int connectionState) {
-//            if (device.equals(mDevice)) { // TODO do we want to stop recording when one device disconneted?
+            if (mThingySdkManager.getConnectedDevices().size() == 0) { // stop recording when no devices are connected;
                 stopRecording();
                 stopMicrophoneOverlayAnimation();
                 stopThingyOverlayAnimation();
                 mStartPlayingAudio = false;
-//            }
+            }
         }
 
         @Override
@@ -265,13 +264,13 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
 
                     //TODO Melike process audio data
-                    StringBuilder soundData = new StringBuilder();
-                    for(int i = 0; i < 512; i++){
-                        soundData.append(data[i]);
-                        soundData.append(" ");
-                    }
-                    Log.i("Martijn", "Sound data: " + soundData);
-
+//                    StringBuilder soundData = new StringBuilder();
+//                    for(int i = 0; i < 512; i++){
+//                        soundData.append(data[i]);
+//                        soundData.append(" ");
+//                    }
+//                    Log.i("Martijn", "Sound data: " + soundData);
+                    analyzeSoundData(data);
 
 
                     Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
@@ -291,6 +290,45 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
             }
         }
     };
+
+    private void analyzeSoundData(byte[] data) {
+        int PRECISSION = 4;
+        float[] mPointsBuffer = new float[2 * 512 / PRECISSION]; // 512 samples, each has X and Y value, each point (but fist and last) must be doubled: A->B, B->C, C->D etc.
+        float[] mPointsBuffer2 = new float[2 * 512 / PRECISSION];
+        float[] mCurrentBuffer = new float[2 * 512 / PRECISSION];
+        float[] mPoints;
+        final Object mLock = new Object();
+
+        int mWidth = 100;
+        int mHeight = 30;
+
+
+        final float[] buffer = mCurrentBuffer;
+        final int length = data.length / PRECISSION;
+        final float stepHoriz = (float) mWidth / length;
+        final float stepVert = (float) mHeight / Short.MAX_VALUE;
+
+        int out = 0;
+        for (int i = 0; i < length; i += 2) {
+            buffer[out] = buffer[out + 2] = stepHoriz * i;
+            buffer[out + 1] = buffer[out + 3] = mHeight + stepVert * readShort(data, i * PRECISSION);
+            out += i > 0 ? 4 : 2;
+        }
+
+        buffer[out] = mWidth;
+        buffer[out + 1] = mHeight + stepVert * readShort(data, (length - 1) * PRECISSION);
+
+        mCurrentBuffer = mCurrentBuffer == mPointsBuffer ? mPointsBuffer2 : mPointsBuffer;
+
+        Log.i("Martijn", buffer.toString());
+    }
+
+    private static short readShort(final byte[] data, final int start) {
+        int b1 = data[start] & 0xff;
+        int b2 = data[start + 1] & 0xff;
+
+        return (short) (b2 << 8 | b1);
+    }
 
     private BroadcastReceiver mAudioRecordBroadcastReceiver = new BroadcastReceiver() {
         @Override

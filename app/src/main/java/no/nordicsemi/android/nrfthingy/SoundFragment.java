@@ -302,29 +302,31 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
         //TODO here we can calculate average value of the sound, if we sum the absolute values and divded by amounts of elements;
         int out = 0;
-        int amount;
+        int sum = 0;
         for (int i = 0; i < length; i +=1) {
             buffer[i] = stepVert * readShort(data, i * PRECISSION);
-            amount = i;
+            sum += Math.abs(stepVert * readShort(data, i * PRECISSION));
         }
 
+        int average = sum / length;
+        Log.i("Martijn", "Average sound amplitude" + average);
 
-        StringBuilder msg = new StringBuilder();
-        msg.append("converted sound data: ");
-        for(float d : buffer){
-            msg.append(d);
-            msg.append(" ");
-
-        }
-        StringBuilder msg2 = new StringBuilder();
-        msg2.append("raw sound data: ");
-        for(float d : data){
-            msg2.append(d);
-            msg2.append(" ");
-        }
-
-        Log.i("Martijn", msg.toString());
-        Log.i("Martijn", msg2.toString());
+//        StringBuilder msg = new StringBuilder();
+//        msg.append("converted sound data: ");
+//        for(float d : buffer){
+//            msg.append(d);
+//            msg.append(" ");
+//
+//        }
+//        StringBuilder msg2 = new StringBuilder();
+//        msg2.append("raw sound data: ");
+//        for(float d : data){
+//            msg2.append(d);
+//            msg2.append(" ");
+//        }
+//
+//        Log.i("Martijn", msg.toString());
+//        Log.i("Martijn", msg2.toString());
 
     }
 

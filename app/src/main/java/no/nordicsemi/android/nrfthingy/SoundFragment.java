@@ -49,9 +49,12 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.google.android.material.tabs.TabLayout;
+
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -76,6 +79,7 @@ import android.widget.Toast;
 import com.getkeepsafe.taptargetview.TapTarget;
 import com.getkeepsafe.taptargetview.TapTargetSequence;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -85,6 +89,8 @@ import no.nordicsemi.android.nrfthingy.ClusterHead.ClhConst;
 import no.nordicsemi.android.nrfthingy.ClusterHead.ClhProcessData;
 import no.nordicsemi.android.nrfthingy.ClusterHead.ClhScan;
 import no.nordicsemi.android.nrfthingy.ClusterHead.ClusterHead;
+import no.nordicsemi.android.nrfthingy.FFT.Complex;
+import no.nordicsemi.android.nrfthingy.FFT.FFT;
 import no.nordicsemi.android.nrfthingy.common.MessageDialogFragment;
 import no.nordicsemi.android.nrfthingy.common.PermissionRationaleDialogFragment;
 import no.nordicsemi.android.nrfthingy.common.Utils;
@@ -123,7 +129,6 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
     private String closestThingyID = "";
     private int closestThingyAmplitude = -1;
-
 
 
     private ThingyListener mThingyListener = new ThingyListener() {
@@ -184,8 +189,8 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
         @Override
         public void onButtonStateChangedEvent(BluetoothDevice bluetoothDevice, int buttonState) {
             Log.i("Martijn", "Listened in SoundFragment, now pressed the button on device" + bluetoothDevice.getName() + " to state " + buttonState);
-            mThingySdkManager.setConstantLedMode(bluetoothDevice, 0,0,255);
-            if (buttonState == 1){
+            mThingySdkManager.setConstantLedMode(bluetoothDevice, 0, 0, 255);
+            if (buttonState == 1) {
                 testMartijn = !testMartijn;
             }
             Log.i("Martijn", "Now the testMartijn variable is " + testMartijn);
@@ -265,8 +270,49 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
                     //PSG edit No.1
                     //audio receive event
-                    if( mStartPlayingAudio = true)
-                         mClhAdvertiser.addAdvSoundData(data);
+                    Log.i(LOG_TAG, "process sound data:name" + bluetoothDevice.getName() + "data size:" + data.length);
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            final int mNumberOfFFTPoints = data.length / 2; // 256, it should be power of 2
+                            double mMaxFFTSample;
+                            double temp = 0;
+                            Complex[] y;
+                            Complex[] complexSignal = new Complex[mNumberOfFFTPoints];
+                            double[] absSignal = new double[mNumberOfFFTPoints / 2];
+                            byte[] arr = new byte[4];
+                            int soundInt = 0;
+                            for (int i = 0; i < mNumberOfFFTPoints; i++) {
+                                arr[3] = data[2 * i];
+                                arr[2] = data[2 * i + 1];
+                                arr[0] = arr[1] = 0;
+                                if (arr[2] < 0) {
+                                    arr[0] = arr[1] = (byte) 0xFF;
+                                }
+                                soundInt = ByteBuffer.wrap(arr).getInt();
+                                temp = (double) soundInt / 32768.0F;
+                                complexSignal[i] = new Complex(temp, 0.0);
+                            }
+                            //Compute FFT
+                            y = FFT.fft(complexSignal); // --> Here I use FFT class
+                            mMaxFFTSample = 0.0;
+                            int mPeakPos = 0;
+                            for (int i = 0; i < (mNumberOfFFTPoints / 2); i++) {
+                                absSignal[i] = Math.sqrt(Math.pow(y[i].re(), 2) + Math.pow(y[i].im(), 2));
+                                if (absSignal[i] > mMaxFFTSample) {
+                                    mMaxFFTSample = absSignal[i];
+                                    mPeakPos = i;
+                                }
+                            }
+                            double freq = mPeakPos * 62.5; // sampling rate 8Khz, N=256 ->8000/(256/2)=62.5
+                            int frequency = (int) freq;
+                            if ((mMaxFFTSample > 1.5) && (frequency > 100))
+                                mClhLog.append("freq:" + frequency + " Hz. Power:" + mMaxFFTSample + "\r\n");
+                            Log.i(LOG_TAG, "main frequency is " + frequency + ", power:" + mMaxFFTSample);
+                        }
+                    });
+                    if (mStartPlayingAudio = true)
+                        mClhAdvertiser.addAdvSoundData(data);
 
 
                     //TODO Melike process audio data
@@ -280,6 +326,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
 
 //                    Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
+
 
                     int avgAmplitude = analyzeSoundDataAverage(data);
                     if(avgAmplitude > 10){
@@ -305,10 +352,10 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                     }
 
 
-                }else{
+                } else {
                     Log.e("Martijn", "onMicrophoneValueChangedEvent, but data length is 0");
                 }
-            }else{
+            } else {
                 Log.e("Martijn", "onMicrophoneValueChangedEvent, but data is null");
             }
         }
@@ -326,7 +373,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
         //TODO here we can calculate average value of the sound, if we sum the absolute values and divded by amounts of elements;
         int out = 0;
         int sum = 0;
-        for (int i = 0; i < length; i +=1) {
+        for (int i = 0; i < length; i += 1) {
             buffer[i] = stepVert * readShort(data, i * PRECISSION);
             sum += Math.abs(stepVert * readShort(data, i * PRECISSION));
         }
@@ -405,16 +452,16 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
     private Button mAdvertiseButton;
     private EditText mClhIDInput;
     private TextView mClhLog;
-    private final String LOG_TAG="CLH Sound";
+    private final String LOG_TAG = "CLH Sound";
 
-    private ClhAdvertisedData mClhData=new ClhAdvertisedData();
-    private boolean mIsSink=false;
-    private byte mClhID=2;
-    private byte mClhDestID=0;
-    private byte mClhHops=0;
-    private byte mClhThingyID=1;
-    private byte mClhThingyType=1;
-    private int mClhThingySoundPower=100;
+    private ClhAdvertisedData mClhData = new ClhAdvertisedData();
+    private boolean mIsSink = false;
+    private byte mClhID = 2;
+    private byte mClhDestID = 0;
+    private byte mClhHops = 0;
+    private byte mClhThingyID = 1;
+    private byte mClhThingyType = 1;
+    private int mClhThingySoundPower = 100;
     ClusterHead mClh;
     ClhAdvertise mClhAdvertiser;
     ClhScan mClhScanner;
@@ -514,17 +561,17 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
         // Martijn
         // Start or stop recording on all connected thingies;
-         mThingy.setOnClickListener(new View.OnClickListener() {
+        mThingy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                for(BluetoothDevice device : mThingySdkManager.getConnectedDevices()){
+                for (BluetoothDevice device : mThingySdkManager.getConnectedDevices()) {
 //                    Log.i("Martijn", "I think device " + device.getName() + " is connected thus trying to enable/disable microphone");
                     if (mThingySdkManager.isConnected(device)) {
                         if (!mStartPlayingAudio) {
                             mThingySdkManager.enableThingyMicrophone(device, true);
                             mThingySdkManager.setConstantLedMode(device, 255, 0, 0); //indicate the thingy is recording
                             Log.i("Martijn", "Started recording on device " + device.getName());
-                        }else {
+                        } else {
                             mThingySdkManager.enableThingyMicrophone(device, false);
                             mThingySdkManager.setConstantLedMode(device, 0, 0, 255); //indicate the thingy stopped recording
                             Log.i("Martijn", "Stopped recording on device " + device.getName());
@@ -538,7 +585,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                     mStartPlayingAudio = true;
                     startThingyOverlayAnimation();
                     Log.i("Martijn", "Started recording on all thingies now");
-                } else{
+                } else {
                     mStartPlayingAudio = false;
                     stopThingyOverlayAnimation();
                     Log.i("Martijn", "Stopped recording on all thingies now");
@@ -593,29 +640,27 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
         //PSG edit No.3----------------------------
         mAdvertiseButton = rootView.findViewById(R.id.startClh_btn);
-        mClhIDInput= rootView.findViewById(R.id.clhIDInput_text);
-        mClhLog= rootView.findViewById(R.id.logClh_text);
+        mClhIDInput = rootView.findViewById(R.id.clhIDInput_text);
+        mClhLog = rootView.findViewById(R.id.logClh_text);
 
         //initial Clusterhead: advertiser, scanner, processor
-        mClh=new ClusterHead(mClhID);
+        mClh = new ClusterHead(mClhID);
         mClh.initClhBLE(ClhConst.ADVERTISING_INTERVAL);
-        mClhAdvertiser=mClh.getClhAdvertiser();
-        mClhScanner=mClh.getClhScanner();
-        mClhProcessor=mClh.getClhProcessor();
+        mClhAdvertiser = mClh.getClhAdvertiser();
+        mClhScanner = mClh.getClhScanner();
+        mClhProcessor = mClh.getClhProcessor();
 
         //timer 1000 ms for SINK to process receive data(display data to text box)
-        final Handler handler=new Handler();
-        handler. postDelayed(new Runnable() {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 handler.postDelayed(this, 1000); //loop every cycle
-                if(mIsSink)
-                {
-                    ArrayList<ClhAdvertisedData> procList=mClhProcessor.getProcessDataList();
-                    for(int i=0; i<procList.size();i++)
-                    {
-                        if(i==10) break; //just display 10 line in one cycle
-                        byte[] data=procList.get(0).getParcelClhData();
+                if (mIsSink) {
+                    ArrayList<ClhAdvertisedData> procList = mClhProcessor.getProcessDataList();
+                    for (int i = 0; i < procList.size(); i++) {
+                        if (i == 10) break; //just display 10 line in one cycle
+                        byte[] data = procList.get(0).getParcelClhData();
                         mClhLog.append(Arrays.toString(data));
                         mClhLog.append("\r\n");
                         procList.remove(0);
@@ -645,22 +690,22 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                     //check input text must in rang 0..127
                     String strEnteredVal = mClhIDInput.getText().toString();
                     if ((strEnteredVal.compareTo("") == 0) || (strEnteredVal == null)) {
-                        mClhIDInput.setText(String.format( "%d", mClhID));
+                        mClhIDInput.setText(String.format("%d", mClhID));
                         Log.i(LOG_TAG, "error: ClhID must be in 0-127");
-                        Log.i(LOG_TAG, "set ClhID default:"+mClhID);
+                        Log.i(LOG_TAG, "set ClhID default:" + mClhID);
 
                     } else {
                         int num = Integer.valueOf(strEnteredVal);
-                        if (num>127) num=mClhID;
+                        if (num > 127) num = mClhID;
                         mClhID = (byte) num;
                         mIsSink = mClh.setClhID(mClhID);
-                        Log.i(LOG_TAG, "set ClhID:"+mClhID);
+                        Log.i(LOG_TAG, "set ClhID:" + mClhID);
                     }
 
                     //ID=127, set dummy data include 100 elements for testing purpose
-                    if(mClhID==127) {
+                    if (mClhID == 127) {
                         //mClhID = 1;
-                        byte clhPacketID=1;
+                        byte clhPacketID = 1;
                         mClhThingySoundPower = 100;
                         mClhData.setSourceID(mClhID);
                         mClhData.setPacketID(clhPacketID);
@@ -669,33 +714,30 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                         mClhData.setThingyId(mClhThingyID);
                         mClhData.setThingyDataType(mClhThingyType);
                         mClhData.setSoundPower(mClhThingySoundPower);
-                        mClhAdvertiser.addAdvPacketToBuffer(mClhData,true);
+                        mClhAdvertiser.addAdvPacketToBuffer(mClhData, true);
                         for (int i = 0; i < 100; i++) {
                             ClhAdvertisedData clh = new ClhAdvertisedData();
                             clh.Copy(mClhData);
                             //Log.i(LOG_TAG, "Array old:" + Arrays.toString(clh.getParcelClhData()));
                             mClhThingySoundPower += 10;
                             clh.setSoundPower(mClhThingySoundPower);
-                            mClhAdvertiser.addAdvPacketToBuffer(clh,true);
+                            mClhAdvertiser.addAdvPacketToBuffer(clh, true);
 
                             Log.i(LOG_TAG, "Add array:" + Arrays.toString(clh.getParcelClhData()));
                             Log.i(LOG_TAG, "Array new size:" + mClhAdvertiser.getAdvertiseList().size());
                         }
-                      }
+                    }
 
                     mClhAdvertiser.nextAdvertisingPacket(); //start advertising
-                }
-                else
-                {//stop advertising
+                } else {//stop advertising
                     mAdvertiseButton.setText("Start");
                     mClhIDInput.setEnabled(true);
                     mClhAdvertiser.stopAdvertiseClhData();
                 }
             }
         });
-        mClhIDInput.setText(Integer.toString((int)mClhID));
+        mClhIDInput.setText(Integer.toString((int) mClhID));
         //End PSG edit No.3----------------------------
-
 
 
         return rootView;
@@ -703,7 +745,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
     // Martijn
     private void colorAllConnectedThingies(int red, int green, int blue) {
-        for(BluetoothDevice device : mThingySdkManager.getConnectedDevices()){
+        for (BluetoothDevice device : mThingySdkManager.getConnectedDevices()) {
             if (mThingySdkManager.isConnected(device)) {
                 mThingySdkManager.setConstantLedMode(device, red, green, blue);
             } else {
@@ -736,7 +778,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
     public void onResume() {
         super.onResume();
         Log.i("Martijn", "onResume() of soundfragment is called while " + mThingySdkManager.getConnectedDevices().size() + " devices are connected");
-        for(BluetoothDevice device : mThingySdkManager.getConnectedDevices()){
+        for (BluetoothDevice device : mThingySdkManager.getConnectedDevices()) {
             if (mThingySdkManager.isConnected(device)) {
                 ThingyListenerHelper.registerThingyListener(getContext(), mThingyListener, device);
                 LocalBroadcastManager.getInstance(requireContext()).registerReceiver(mAudioRecordBroadcastReceiver, createAudioRecordIntentFilter(device.getAddress()));

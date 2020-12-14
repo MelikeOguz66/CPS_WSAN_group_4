@@ -328,7 +328,7 @@ public class ThingyListenerHelper {
                     }
                     break;
                 case ThingyUtils.MICROPHONE_NOTIFICATION:
-                    Log.i("Martijn", "ThingyListenerHelper.java case ThingyUtils.MICROPHONE_NOTIFICATION");
+//                    Log.i("Martijn", "ThingyListenerHelper.java case ThingyUtils.MICROPHONE_NOTIFICATION");
                     final byte [] data = intent.getExtras().getByteArray(ThingyUtils.EXTRA_DATA_PCM);
                     if(globalListener != null) {
                         globalListener.onMicrophoneValueChangedEvent(device, data);

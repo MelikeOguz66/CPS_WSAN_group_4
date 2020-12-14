@@ -306,7 +306,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                             }
                             double freq = mPeakPos * 62.5; // sampling rate 8Khz, N=256 ->8000/(256/2)=62.5
                             int frequency = (int) freq;
-                            if ((mMaxFFTSample > 5) && (frequency > 100)) { //TODO change values
+                            if ((mMaxFFTSample > 5) && (frequency >= 2000 && frequency =< 3000)) { //TODO change values
                                 mClhLog.append("freq:" + frequency + " Hz. Power:" + mMaxFFTSample + "\r\n");
                                 Log.i("Martijn", "main frequency is " + frequency + ", power:" + mMaxFFTSample);
 

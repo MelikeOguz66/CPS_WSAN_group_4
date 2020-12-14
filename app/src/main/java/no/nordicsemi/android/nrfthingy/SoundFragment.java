@@ -328,28 +328,28 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 //                    Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
 
 
-                    int avgAmplitude = analyzeSoundDataAverage(data);
-                    if(avgAmplitude > 10){
-                        Log.i("Martijn", "An event happened on device " + bluetoothDevice.getName() + ", ID "+ bluetoothDevice.getAddress() + " thus setting indication led");
-
-                        if (avgAmplitude > closestThingyAmplitude){
-                            closestThingyID = bluetoothDevice.getAddress();
-                            closestThingyAmplitude = avgAmplitude;
-                            Log.i("Martijn", "This amplitude is higher than the other device");
-                        }
-
-                        final Handler handler = new Handler();
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (bluetoothDevice.getAddress().equals(closestThingyID)) {
-                                    mThingySdkManager.setConstantLedMode(bluetoothDevice, 0, 255, 0);
-                                    closestThingyAmplitude = 0;
-                                    closestThingyID = "";
-                                }
-                            }
-                        }, 100);
-                    }
+//                    int avgAmplitude = analyzeSoundDataAverage(data);
+//                    if(avgAmplitude > 10){
+//                        Log.i("Martijn", "An event happened on device " + bluetoothDevice.getName() + ", ID "+ bluetoothDevice.getAddress() + " thus setting indication led");
+//
+//                        if (avgAmplitude > closestThingyAmplitude){
+//                            closestThingyID = bluetoothDevice.getAddress();
+//                            closestThingyAmplitude = avgAmplitude;
+//                            Log.i("Martijn", "This amplitude is higher than the other device");
+//                        }
+//
+//                        final Handler handler = new Handler();
+//                        handler.postDelayed(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                if (bluetoothDevice.getAddress().equals(closestThingyID)) {
+//                                    mThingySdkManager.setConstantLedMode(bluetoothDevice, 0, 255, 0);
+//                                    closestThingyAmplitude = 0;
+//                                    closestThingyID = "";
+//                                }
+//                            }
+//                        }, 100);
+//                    }
 
 
                 } else {

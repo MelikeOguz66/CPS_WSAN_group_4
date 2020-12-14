@@ -121,6 +121,8 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
     private boolean testMartijn = false;
 
+
+
     private ThingyListener mThingyListener = new ThingyListener() {
         private Handler mHandler = new Handler();
 
@@ -179,6 +181,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
         @Override
         public void onButtonStateChangedEvent(BluetoothDevice bluetoothDevice, int buttonState) {
             Log.i("Martijn", "Listened in SoundFragment, now pressed the button on device" + bluetoothDevice.getName() + " to state " + buttonState);
+            mThingySdkManager.setConstantLedMode(bluetoothDevice, 0,0,255);
             if (buttonState == 1){
                 testMartijn = !testMartijn;
             }
@@ -270,12 +273,12 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 //                        soundData.append(" ");
 //                    }
 //                    Log.i("Martijn", "Sound data: " + soundData);
-                    analyzeSoundData(data);
+//                    analyzeSoundDataAverage(data);
 
 
 //                    Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
 
-                    if(testMartijn){
+                    if(analyzeSoundDataAverage(data) > 10){
                         Log.i("Martijn", "An event happened on device " + bluetoothDevice.getName() + ", thus setting indication led");
                         mThingySdkManager.setConstantLedMode(bluetoothDevice, 0,255,0);
                         testMartijn = false;
@@ -291,10 +294,10 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
         }
     };
 
-    private void analyzeSoundData(byte[] data) {
+    private int analyzeSoundDataAverage(byte[] data) {
         int PRECISSION = 4;
 
-        int mHeight = 100;
+        int mHeight = 500; //TODO?
 
         final float[] buffer = new float[2 * 512 / PRECISSION];// 512 samples, each has X and Y value, each point (but fist and last) must be doubled: A->B, B->C, C->D etc.;
         final int length = data.length / PRECISSION;
@@ -310,6 +313,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
         int average = sum / length;
         Log.i("Martijn", "Average sound amplitude" + average);
+        return average;
 
 //        StringBuilder msg = new StringBuilder();
 //        msg.append("converted sound data: ");

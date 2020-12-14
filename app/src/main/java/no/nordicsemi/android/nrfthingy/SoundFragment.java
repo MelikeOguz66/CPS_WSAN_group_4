@@ -326,7 +326,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                                             closestThingyID = "";
                                             //TODO SEND PACKET TO SINK
                                             int transmissionAttempt = 0;
-                                            while (transmissionAttempt < 4 && ackreceived.getSequence() == sequencenumber && ackreceived.getDestinationID() == mClhID) {
+                                            while (transmissionAttempt < 4 && ackreceived.getSequence() != sequencenumber && ackreceived.getDestinationID() != mClhID) {
                                                 sequencenumber++;
                                                 ClhAdvertisedData packet = new ClhAdvertisedData();
                                                 packet.setSourceID((byte) mClhID);
@@ -335,15 +335,27 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                                                 packet.setThingyDataType((byte) 0);
                                                 packet.setSequence((byte) sequencenumber);
                                                 //packet.setSoundPower(100);
-                                                packet.setThingyId((byte) 1); //TODO GET NUMBER
+                                                String string1 = closestThingyID.substring(closestThingyID.length()-2);
+
+                                                char char1 = closestThingyID.charAt(closestThingyID.length()-1);
+                                                char char2 = closestThingyID.charAt(closestThingyID.length()-2);
+                                                byte thingyid = Byte.parseByte(string1);
+
+                                                packet.setThingyId(thingyid); //TODO GET NUMBER
                                                 mClhAdvertiser.addAdvPacketToBuffer(packet, true); //JAAP added the ack
                                                 transmissionAttempt++;
                                                 ackreceived = mClhScanner.getLastAck();
+
                                                 try {
-                                                    Thread.sleep(1000);
+                                                    Thread.sleep(500);
                                                 } catch (InterruptedException e) {
                                                     e.printStackTrace();
                                                 }
+                                            }
+                                            if (transmissionAttempt >= 4) {
+                                                Log.i("JAAP", "too many transmissions");
+                                            } else {
+                                                Log.i("JAAP", "ack recieved! :D");
                                             }
                                         }
                                     }

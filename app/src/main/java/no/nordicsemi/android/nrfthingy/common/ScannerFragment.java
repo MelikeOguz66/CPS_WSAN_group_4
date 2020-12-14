@@ -40,7 +40,12 @@ package no.nordicsemi.android.nrfthingy.common;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ParcelUuid;
@@ -50,6 +55,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AlertDialog;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -59,15 +66,28 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
+import no.nordicsemi.android.nrfthingy.MainActivity;
 import no.nordicsemi.android.nrfthingy.R;
+import no.nordicsemi.android.nrfthingy.configuration.InitialConfigurationActivity;
+import no.nordicsemi.android.nrfthingy.database.DatabaseContract;
+import no.nordicsemi.android.nrfthingy.database.DatabaseHelper;
+import no.nordicsemi.android.nrfthingy.thingy.Thingy;
+import no.nordicsemi.android.nrfthingy.thingy.ThingyService;
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat;
 import no.nordicsemi.android.support.v18.scanner.ScanCallback;
 import no.nordicsemi.android.support.v18.scanner.ScanFilter;
 import no.nordicsemi.android.support.v18.scanner.ScanResult;
 import no.nordicsemi.android.support.v18.scanner.ScanSettings;
+import no.nordicsemi.android.thingylib.ThingySdkManager;
+
+import static no.nordicsemi.android.nrfthingy.common.Utils.EXTRA_DEVICE;
+import static no.nordicsemi.android.nrfthingy.common.Utils.INITIAL_CONFIG_STATE;
+import static no.nordicsemi.android.nrfthingy.common.Utils.PREFS_INITIAL_SETUP;
+import static no.nordicsemi.android.nrfthingy.common.Utils.isAppInitialisedBefore;
 
 /**
  * ScannerFragment class scan required BLE devices and shows them in a list. This class scans and filter devices with given BLE Service UUID which may be null. It contains a
@@ -87,6 +107,9 @@ public class ScannerFragment extends DialogFragment {
     private DeviceListAdapter mAdapter;
     private Handler mHandler = new Handler();
     private Button mScanButton;
+    private ThingySdkManager mThingySdkManager = ThingySdkManager.getInstance();
+    DatabaseHelper mDatabaseHelper;
+    private String mDeviceName;
 
     private ParcelUuid mUuid;
     private boolean mIsScanning = false;
@@ -112,6 +135,7 @@ public class ScannerFragment extends DialogFragment {
         super.onCreate(savedInstanceState);
         final Bundle args = getArguments();
         mUuid = args.getParcelable(PARAM_UUID);
+        mDatabaseHelper = new DatabaseHelper(this.getContext());
     }
 
     @Override
@@ -251,6 +275,32 @@ public class ScannerFragment extends DialogFragment {
                 troubleshootView.setVisibility(View.GONE);
             }
             mAdapter.update(results);
+
+            //sorts the scanresults on highest signal strength
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                results.sort(new Comparator<ScanResult>() {
+                    @Override
+                    public int compare(ScanResult scanResult, ScanResult t1) {
+                        return t1.getRssi() - scanResult.getRssi();
+                    }
+                });
+            }
+
+
+            //connects a maximum of 4 highest signal strength thingies
+            //makes sure that there are no more than 4 connected at the same time
+            int initConnected = mThingySdkManager.getConnectedDevices().size();
+            for(int i=0; i+initConnected<4 && i < results.size(); i++) {
+                mThingySdkManager.connectToThingy(getContext(), results.get(i).getDevice(), ThingyService.class);
+                Log.i("Martijn",  "Automatically connected to thingy" + results.get(i).getDevice().getName());
+                ((InitialConfigurationActivity)getActivity()).mDevice = results.get(i).getDevice();
+                ((InitialConfigurationActivity)getActivity()).getStarted();
+            }
+
+
+
+
+
         }
 
         @Override
@@ -258,4 +308,6 @@ public class ScannerFragment extends DialogFragment {
             // should never be called
         }
     };
+
+
 }

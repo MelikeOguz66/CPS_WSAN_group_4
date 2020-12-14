@@ -149,7 +149,7 @@ public class InitialConfigurationActivity extends AppCompatActivity implements S
     private String mDeviceName;
 
     private boolean mConfig;
-    private BluetoothDevice mDevice;
+    public BluetoothDevice mDevice;
 
     private DatabaseHelper mDatabaseHelper;
 
@@ -683,10 +683,12 @@ public class InitialConfigurationActivity extends AppCompatActivity implements S
 
     @Override
     public void onDeviceSelected(final BluetoothDevice device, final String name) {
+        Log.i("Martijn", "onDeviceSelected");
         if (mThingySdkManager != null) {
             mThingySdkManager.connectToThingy(this, device, ThingyService.class);
         }
         mDevice = device;
+        getStarted(); // added this line
         animateStepOne();
         showConnectionProgressDialog();
     }
@@ -851,7 +853,7 @@ public class InitialConfigurationActivity extends AppCompatActivity implements S
         }
     }
 
-    private void getStarted() {
+    public void getStarted() {
         if (!isAppInitialisedBefore(this)) {
             final SharedPreferences sp = getSharedPreferences(PREFS_INITIAL_SETUP, MODE_PRIVATE);
             sp.edit().putBoolean(INITIAL_CONFIG_STATE, true).apply();
@@ -1259,6 +1261,6 @@ public class InitialConfigurationActivity extends AppCompatActivity implements S
     private void onServiceDiscoveryCompletion(final BluetoothDevice device) {
         mThingySdkManager.enableEnvironmentNotifications(device, true);
         hideProgressDialog();
-        checkForFwUpdates();
+        //checkForFwUpdates();
     }
 }

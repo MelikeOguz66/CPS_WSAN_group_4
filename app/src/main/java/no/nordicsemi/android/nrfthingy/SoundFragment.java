@@ -270,7 +270,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
                     //PSG edit No.1
                     //audio receive event
-                    Log.i(LOG_TAG, "process sound data:name" + bluetoothDevice.getName() + "data size:" + data.length);
+//                    Log.i(LOG_TAG, "process sound data:name" + bluetoothDevice.getName() + "data size:" + data.length);
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -336,36 +336,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
 //                    Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
 
-
-//                    int avgAmplitude = analyzeSoundDataAverage(data);
-//                    if(avgAmplitude > 10){
-//                        Log.i("Martijn", "An event happened on device " + bluetoothDevice.getName() + ", ID "+ bluetoothDevice.getAddress() + " thus setting indication led");
-//
-//                        if (avgAmplitude > closestThingyAmplitude){
-//                            closestThingyID = bluetoothDevice.getAddress();
-//                            closestThingyAmplitude = avgAmplitude;
-//                            Log.i("Martijn", "This amplitude is higher than the other device");
-//                        }
-//
-//                        final Handler handler = new Handler();
-//                        handler.postDelayed(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                if (bluetoothDevice.getAddress().equals(closestThingyID)) {
-//                                    mThingySdkManager.setConstantLedMode(bluetoothDevice, 0, 255, 0);
-//                                    closestThingyAmplitude = 0;
-//                                    closestThingyID = "";
-//                                }
-//                            }
-//                        }, 100);
-//                    }
-
-
-                } else {
-                    Log.e("Martijn", "onMicrophoneValueChangedEvent, but data length is 0");
                 }
-            } else {
-                Log.e("Martijn", "onMicrophoneValueChangedEvent, but data is null");
             }
         }
     };
@@ -373,13 +344,12 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
     private int analyzeSoundDataAverage(byte[] data) {
         int PRECISSION = 4;
 
-        int mHeight = 500; //TODO?
+        int mHeight = 500; // randomly chosen
 
         final float[] buffer = new float[2 * 512 / PRECISSION];// 512 samples, each has X and Y value, each point (but fist and last) must be doubled: A->B, B->C, C->D etc.;
         final int length = data.length / PRECISSION;
         final float stepVert = (float) mHeight / Short.MAX_VALUE;
 
-        //TODO here we can calculate average value of the sound, if we sum the absolute values and divded by amounts of elements;
         int out = 0;
         int sum = 0;
         for (int i = 0; i < length; i += 1) {

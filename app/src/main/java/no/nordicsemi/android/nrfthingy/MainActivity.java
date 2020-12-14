@@ -234,7 +234,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         public void onServiceDiscoveryCompleted(BluetoothDevice device) {
             updateBatteryLevelVisibility(View.VISIBLE);
             onServiceDiscoveryCompletion(device);
-            checkForFwUpdates();
+            // we can display connected devices with this
+//            mThingySdkManager.getConnectedDevices();
+            //checkForFwUpdates();
         }
 
         @Override
@@ -514,6 +516,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             mProgressDialog = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
             mNfcTagFoundDialogFragment = (NFCTagFoundDialogFragment) getSupportFragmentManager().findFragmentByTag(NFC_DIALOG_TAG);
         }
+
+
+//        FragmentManager fragmentManager = getSupportFragmentManager();
+//
+//        if (fragmentManager.findFragmentByTag(SOUND_FRAGMENT) == null) {
+//            if (mThingySdkManager.isConnected(mDevice)) {
+//                mThingySdkManager.enableEnvironmentNotifications(mDevice, false);
+//                mThingySdkManager.enableMotionNotifications(mDevice, false);
+//                enableSoundNotifications(mDevice, true);
+//            }
+//
+//            final String fragmentTag = mFragmentTag;
+//            clearFragments(fragmentTag);
+//            mFragmentTag = SOUND_FRAGMENT;
+//            SoundFragment soundFragment = SoundFragment.newInstance(mDevice);
+//            getSupportFragmentManager().beginTransaction().add(R.id.container, soundFragment, mFragmentTag).commit();
+//        }
+
+
     }
 
     private void registerNfcBroadcastReceiver() {

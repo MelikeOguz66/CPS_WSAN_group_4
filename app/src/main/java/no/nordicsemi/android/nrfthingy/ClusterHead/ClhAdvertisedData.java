@@ -13,7 +13,7 @@ public class ClhAdvertisedData   {
     private static final int HOP_COUNT_POS=3;
     private static final int THINGY_ID_POS=4;
     private static final int THINGY_DATA_TYPE_POS=5;
-    private static final int SOUND_POWER_POSH=6;
+    private static final int SECUENCENUMBER=6;
     private static final int SOUND_POWER_POSL=7;
 
     private static final int CLH_ARRAY_SIZE=SOUND_POWER_POSL+1;
@@ -69,16 +69,19 @@ public class ClhAdvertisedData   {
         ClhAdvData[HOP_COUNT_POS]=hop;
     }
 
-    public void setSoundPower(int soundPower) {
-        ClhAdvData[SOUND_POWER_POSH] = (byte) (soundPower >> 8);
-        ClhAdvData[SOUND_POWER_POSL] = (byte) (soundPower & 0x00FF);
-        Log.i("Sound power:","Sound power:"+soundPower);
-        Log.i("Sound power:", "Sound power:"+ClhAdvData[SOUND_POWER_POSH]);
-        Log.i("Sound power:", "Sound power:"+ClhAdvData[SOUND_POWER_POSL]);
-    }
+//    public void setSoundPower(int soundPower) {
+//        ClhAdvData[SOUND_POWER_POSH] = (byte) (soundPower >> 8);
+//        ClhAdvData[SOUND_POWER_POSL] = (byte) (soundPower & 0x00FF);
+//        Log.i("Sound power:","Sound power:"+soundPower);
+//        Log.i("Sound power:", "Sound power:"+ClhAdvData[SOUND_POWER_POSH]);
+//        Log.i("Sound power:", "Sound power:"+ClhAdvData[SOUND_POWER_POSL]);
+//    }
 
     public void setThingyId(byte id){
         ClhAdvData[THINGY_ID_POS] = (byte)(id & 0x00FF);
+    }
+    public void setSequence(byte sequence) {
+        ClhAdvData[SECUENCENUMBER] = (byte) (sequence & 0x00FF);
     }
     public void setThingyDataType(byte typeData){
         ClhAdvData[THINGY_DATA_TYPE_POS] = (byte)(typeData & 0x00FF);
@@ -112,9 +115,11 @@ public class ClhAdvertisedData   {
     }
     public byte getThingyId(){return ClhAdvData[THINGY_ID_POS];}
     public byte getThingyDataType(){return ClhAdvData[THINGY_DATA_TYPE_POS];}
-    public int getSoundPower()
-    {
-        return (ClhAdvData[SOUND_POWER_POSH]<<8)+((int)(ClhAdvData[SOUND_POWER_POSL])&0x00FF);
-    }
+    public byte getSequence(){return ClhAdvData[SECUENCENUMBER];}
+
+    //    public int getSoundPower()
+//    {
+//        return (ClhAdvData[SOUND_POWER_POSH]<<8)+((int)(ClhAdvData[SOUND_POWER_POSL])&0x00FF);
+//    }
 
 }

@@ -129,7 +129,9 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
     private String closestThingyID = "";
     private double closestThingyAmplitude = -1;
-
+    private byte packetnumber;
+    private int sequencenumber = 0;
+    private ClhAdvertisedData ackreceived;
 
     private ThingyListener mThingyListener = new ThingyListener() {
         private Handler mHandler = new Handler();
@@ -322,14 +324,35 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                                             mThingySdkManager.setConstantLedMode(bluetoothDevice, 0, 255, 0);
                                             closestThingyAmplitude = 0;
                                             closestThingyID = "";
+                                            //TODO SEND PACKET TO SINK
+                                            int transmissionAttempt = 0;
+                                            while (transmissionAttempt < 4 && ackreceived.getSequence() == sequencenumber && ackreceived.getDestinationID() == mClhID) {
+                                                sequencenumber++;
+                                                ClhAdvertisedData packet = new ClhAdvertisedData();
+                                                packet.setSourceID((byte) mClhID);
+                                                packet.setDestId((byte) 0);
+                                                packet.setHopCount((byte) 0);
+                                                packet.setThingyDataType((byte) 0);
+                                                packet.setSequence((byte) sequencenumber);
+                                                //packet.setSoundPower(100);
+                                                packet.setThingyId((byte) 1); //TODO GET NUMBER
+                                                mClhAdvertiser.addAdvPacketToBuffer(packet, true); //JAAP added the ack
+                                                transmissionAttempt++;
+                                                ackreceived = mClhScanner.getLastAck();
+                                                try {
+                                                    Thread.sleep(1000);
+                                                } catch (InterruptedException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
                                         }
                                     }
                                 }, 100);
                             }
                         }
                     });
-                    if (mStartPlayingAudio = true)
-                        mClhAdvertiser.addAdvSoundData(data);
+                    //if (mStartPlayingAudio = true)
+                    //    mClhAdvertiser.addAdvSoundData(data);
 
 
 
@@ -369,6 +392,8 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
             }
         }
     };
+
+
 
     private int analyzeSoundDataAverage(byte[] data) {
         int PRECISSION = 4;
@@ -722,14 +747,14 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                         mClhData.setHopCount(mClhHops);
                         mClhData.setThingyId(mClhThingyID);
                         mClhData.setThingyDataType(mClhThingyType);
-                        mClhData.setSoundPower(mClhThingySoundPower);
+                        //mClhData.setSoundPower(mClhThingySoundPower);
                         mClhAdvertiser.addAdvPacketToBuffer(mClhData, true);
                         for (int i = 0; i < 100; i++) {
                             ClhAdvertisedData clh = new ClhAdvertisedData();
                             clh.Copy(mClhData);
                             //Log.i(LOG_TAG, "Array old:" + Arrays.toString(clh.getParcelClhData()));
                             mClhThingySoundPower += 10;
-                            clh.setSoundPower(mClhThingySoundPower);
+                            //clh.setSoundPower(mClhThingySoundPower);
                             mClhAdvertiser.addAdvPacketToBuffer(clh, true);
 
                             Log.i(LOG_TAG, "Add array:" + Arrays.toString(clh.getParcelClhData()));

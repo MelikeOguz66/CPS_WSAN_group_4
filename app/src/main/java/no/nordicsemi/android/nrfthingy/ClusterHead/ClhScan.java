@@ -36,7 +36,15 @@ public class ClhScan {
     private ClhProcessData mClhProcessData;
     private ArrayList<ClhAdvertisedData> mClhAdvDataList;
     private static final int MAX_ADVERTISE_LIST_ITEM=128;
+    private byte acknumber;
+    private ClhAdvertisedData lastAck;
 
+    public ClhAdvertisedData getLastAck() {
+        return lastAck;
+    }
+    public void setLastAck(ClhAdvertisedData ack) {
+        lastAck = ack;
+    }
     public ClhScan()
     {
 
@@ -67,12 +75,15 @@ public class ClhScan {
             }
 
             //setting
-            ScanSettings ClhScanSettings = new ScanSettings.Builder()
-                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                    .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-                    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-                    .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
-                    .build();
+            ScanSettings ClhScanSettings = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                ClhScanSettings = new ScanSettings.Builder()
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                        .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                        .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                        .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
+                        .build();
+            }
 
             //set filter: filter name
             ScanFilter filter = new ScanFilter.Builder()
@@ -192,10 +203,10 @@ public class ClhScan {
                         life counter: time of the packet lived in history list
           --------------*/
 
-        if (ClhScanHistoryArray.indexOfKey(manufacturerData.keyAt(0))<0)
+        if (ClhScanHistoryArray.indexOfKey(manufacturerData.keyAt(0))<0 || mIsSink)
         {//not yet received
             //history not yet full, update new "unique packet ID" to history list, reset life counter
-            if(ClhScanHistoryArray.size()<ClhConst.SCAN_HISTORY_LIST_SIZE)
+            if(ClhScanHistoryArray.size()<ClhConst.SCAN_HISTORY_LIST_SIZE && !mIsSink)
             {
                 ClhScanHistoryArray.append(manufacturerData.keyAt(0),0);
             }
@@ -210,12 +221,25 @@ public class ClhScan {
             {//if this Cluster Head is the Sink node (ID=0), add data to waiting process list
                     mClhProcessData.addProcessPacketToBuffer(clhAdvData);
                     Log.i(LOG_TAG, "Add data to process list, len:" + mClhProcDataList.size());
+                    //TODO SEND ACK
+                    ClhAdvertisedData ack = new ClhAdvertisedData();
+                    ack.setSourceID((byte) 0 );
+                    ack.setDestId(clhAdvData.getSourceID());
+                    ack.setHopCount((byte) 0);
+                    ack.setThingyDataType((byte) 1);
+                    ack.setSequence(clhAdvData.getSequence());
+                    ack.setThingyId(clhAdvData.getThingyId());
+                    mClhAdvertiser.addAdvPacketToBuffer(ack, true); //JAAP added the ack
+
             }
-            else {//normal CLuster Head (ID 0..127) add data to advertising list to forward
+            else if (clhAdvData.getDestinationID() == mClhID){//normal CLuster Head (ID 0..127) add data to advertising list to forward
                     mClhAdvertiser.addAdvPacketToBuffer(clhAdvData,false);
                     Log.i(LOG_TAG, "Add data to advertised list, len:" + mClhAdvDataList.size());
                     Log.i(LOG_TAG, "Advertise list at " + (mClhAdvDataList.size() - 1) + ":"
                             + Arrays.toString(mClhAdvDataList.get(mClhAdvDataList.size() - 1).getParcelClhData()));
+            } else {
+                //ACK FOR ME :D :) :O
+                setLastAck(clhAdvData);
             }
         }
     }

@@ -236,7 +236,7 @@ public class ClhAdvertise {
                 advData.setThingyDataType((byte) 10);
                 advData.setThingyId((byte) 1);
                 advData.setHopCount((byte) 0);
-                advData.setSoundPower(sounddata);
+                //advData.setSoundPower(sounddata);
                 addAdvPacketToBuffer(advData,true);
                 ClhAdvertisedData temp=mClhAdvDataList.get(mClhAdvDataList.size()-1);
                 Log.i(LOG_TAG,"add new sound data:"+ Arrays.toString( temp.getParcelClhData()));

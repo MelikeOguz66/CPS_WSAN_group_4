@@ -127,6 +127,9 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
     private boolean testMartijn = false;
 
+    private String closestThingyID = "";
+    private int closestThingyAmplitude = -1;
+
 
     private ThingyListener mThingyListener = new ThingyListener() {
         private Handler mHandler = new Handler();
@@ -255,7 +258,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
         }
 
         @Override
-        public void onMicrophoneValueChangedEvent(BluetoothDevice bluetoothDevice, final byte[] data) {
+        public void onMicrophoneValueChangedEvent(final BluetoothDevice bluetoothDevice, final byte[] data) {
             if (data != null) {
                 if (data.length != 0) {
                     mHandler.post(new Runnable() {
@@ -324,10 +327,27 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
 //                    Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());
 
-                    if (analyzeSoundDataAverage(data) > 10) {
-                        Log.i("Martijn", "An event happened on device " + bluetoothDevice.getName() + ", thus setting indication led");
-                        mThingySdkManager.setConstantLedMode(bluetoothDevice, 0, 255, 0);
-                        testMartijn = false;
+                    int avgAmplitude = analyzeSoundDataAverage(data);
+                    if(avgAmplitude > 10){
+                        Log.i("Martijn", "An event happened on device " + bluetoothDevice.getName() + ", ID "+ bluetoothDevice.getAddress() + " thus setting indication led");
+
+                        if (avgAmplitude > closestThingyAmplitude){
+                            closestThingyID = bluetoothDevice.getAddress();
+                            closestThingyAmplitude = avgAmplitude;
+                            Log.i("Martijn", "This amplitude is higher than the other device");
+                        }
+
+                        final Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (bluetoothDevice.getAddress().equals(closestThingyID)) {
+                                    mThingySdkManager.setConstantLedMode(bluetoothDevice, 0, 255, 0);
+                                    closestThingyAmplitude = 0;
+                                    closestThingyID = "";
+                                }
+                            }
+                        }, 100);
                     }
 
 
@@ -358,7 +378,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
         }
 
         int average = sum / length;
-        Log.i("Martijn", "Average sound amplitude" + average);
+//        Log.i("Martijn", "Average sound amplitude" + average);
         return average;
 
 //        StringBuilder msg = new StringBuilder();

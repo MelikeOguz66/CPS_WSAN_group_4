@@ -67,12 +67,15 @@ public class ClhScan {
             }
 
             //setting
-            ScanSettings ClhScanSettings = new ScanSettings.Builder()
-                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                    .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-                    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-                    .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
-                    .build();
+            ScanSettings ClhScanSettings = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                ClhScanSettings = new ScanSettings.Builder()
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                        .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                        .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                        .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
+                        .build();
+            }
 
             //set filter: filter name
             ScanFilter filter = new ScanFilter.Builder()
@@ -141,7 +144,8 @@ public class ClhScan {
                 Log.i(LOG_TAG,"low RSSI");
                 return;
             }
-
+            //make map with key: result.getDevice() and object: result.getRssi()
+            //result.getDevice()
             SparseArray<byte[]> manufacturerData = result.getScanRecord().getManufacturerSpecificData(); //get data
             processScanData(manufacturerData);
         }

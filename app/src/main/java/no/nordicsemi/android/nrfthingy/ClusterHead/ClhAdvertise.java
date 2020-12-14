@@ -171,7 +171,7 @@ public class ClhAdvertise {
     //------------------------
     // advertising next data in the waiting list
     public void nextAdvertisingPacket(){
-
+    //TODO JAAP
         if (mClhAdvDataList.size()>0)
         {//list not empty, advertise item 0 in the list
             byte[] mAdvData = mClhAdvDataList.get(0).getParcelClhData();
@@ -205,6 +205,11 @@ public class ClhAdvertise {
                 byte hopcounts=data.getHopCounts();
                 hopcounts++;
                 data.setHopCount(hopcounts);
+                if (hopcounts > 5) {
+                    Log.i("JAAP", "hopcount to high to add to buffer!");
+                    return;
+                } //JAAP
+
             }
             mClhAdvDataList.add(data);
             Log.i(LOG_TAG,"add Adv packet, size:"+mClhAdvDataList.size());
@@ -270,7 +275,7 @@ public class ClhAdvertise {
         Log.i(LOG_TAG,"Start Start Advertizer func");
 
         AdvertiseSettings.Builder advSettingsBuilder = new AdvertiseSettings.Builder()
-                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_LOW)
+                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
                 .setConnectable(false);
         //set operation mode: low energy to latency
         switch (settings[ADV_SETTING_BYTE_MODE]) {

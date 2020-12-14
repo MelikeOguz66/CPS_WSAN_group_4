@@ -585,6 +585,17 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                     {
                         if(i==10) break; //just display 10 line in one cycle
                         byte[] data=procList.get(0).getParcelClhData();
+                        ClhAdvertisedData packet = procList.get(0);
+                        ClhAdvertisedData ack = new ClhAdvertisedData();
+                        ack.setDestId(packet.getSourceID());
+                        ack.setSourceID((byte) 0);
+                        ack.setPacketID((byte) 0);
+                        ack.setThingyDataType((byte) 2);
+                        ack.setThingyId(packet.getThingyId());
+                        ack.setHopCount((byte) 0);
+
+                        byte source = packet.getSourceID();
+
                         mClhLog.append(Arrays.toString(data));
                         mClhLog.append("\r\n");
                         procList.remove(0);

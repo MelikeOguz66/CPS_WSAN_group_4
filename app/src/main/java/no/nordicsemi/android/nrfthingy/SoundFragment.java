@@ -128,7 +128,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
     private boolean testMartijn = false;
 
     private String closestThingyID = "";
-    private int closestThingyAmplitude = -1;
+    private double closestThingyAmplitude = -1;
 
 
     private ThingyListener mThingyListener = new ThingyListener() {
@@ -306,23 +306,32 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                             }
                             double freq = mPeakPos * 62.5; // sampling rate 8Khz, N=256 ->8000/(256/2)=62.5
                             int frequency = (int) freq;
-                            if ((mMaxFFTSample > 1.5) && (frequency > 100))
+                            if ((mMaxFFTSample > 5) && (frequency > 100)) { //TODO change values
                                 mClhLog.append("freq:" + frequency + " Hz. Power:" + mMaxFFTSample + "\r\n");
-                            Log.i(LOG_TAG, "main frequency is " + frequency + ", power:" + mMaxFFTSample);
+                                Log.i("Martijn", "main frequency is " + frequency + ", power:" + mMaxFFTSample);
+
+                                if (mMaxFFTSample > closestThingyAmplitude) {
+                                    closestThingyID = bluetoothDevice.getAddress();
+                                    closestThingyAmplitude = mMaxFFTSample;
+                                }
+                                final Handler handler = new Handler();
+                                handler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (bluetoothDevice.getAddress().equals(closestThingyID)) {
+                                            mThingySdkManager.setConstantLedMode(bluetoothDevice, 0, 255, 0);
+                                            closestThingyAmplitude = 0;
+                                            closestThingyID = "";
+                                        }
+                                    }
+                                }, 100);
+                            }
                         }
                     });
                     if (mStartPlayingAudio = true)
                         mClhAdvertiser.addAdvSoundData(data);
 
 
-                    //TODO Melike process audio data
-//                    StringBuilder soundData = new StringBuilder();
-//                    for(int i = 0; i < 512; i++){
-//                        soundData.append(data[i]);
-//                        soundData.append(" ");
-//                    }
-//                    Log.i("Martijn", "Sound data: " + soundData);
-//                    analyzeSoundDataAverage(data);
 
 
 //                    Log.v("Martijn", "received audio from device " + bluetoothDevice.getName() + " with UUID " + bluetoothDevice.getUuids() + " and address " + bluetoothDevice.getAddress());

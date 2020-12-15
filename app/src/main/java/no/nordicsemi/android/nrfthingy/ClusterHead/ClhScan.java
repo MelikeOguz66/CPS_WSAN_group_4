@@ -203,7 +203,7 @@ public class ClhScan {
                         life counter: time of the packet lived in history list
           --------------*/
 
-        if (ClhScanHistoryArray.indexOfKey(manufacturerData.keyAt(0))<0 || mIsSink)
+        if (ClhScanHistoryArray.indexOfKey(manufacturerData.keyAt(0))<0)
         {//not yet received
             //history not yet full, update new "unique packet ID" to history list, reset life counter
             if(ClhScanHistoryArray.size()<ClhConst.SCAN_HISTORY_LIST_SIZE && !mIsSink)

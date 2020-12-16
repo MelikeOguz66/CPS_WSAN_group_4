@@ -229,6 +229,7 @@ public class ClhScan {
                     ack.setThingyDataType((byte) 1);
                     ack.setSequence(clhAdvData.getSequence());
                     ack.setThingyId(clhAdvData.getThingyId());
+                    Log.i("JAAP", "sending ack to " + clhAdvData.getSourceID());
                     mClhAdvertiser.addAdvPacketToBuffer(ack, true); //JAAP added the ack
 
             }
@@ -239,6 +240,7 @@ public class ClhScan {
                             + Arrays.toString(mClhAdvDataList.get(mClhAdvDataList.size() - 1).getParcelClhData()));
             } else {
                 //ACK FOR ME :D :) :O
+                Log.i("JAAP", "got an ack ment for me!");
                 setLastAck(clhAdvData);
             }
         }

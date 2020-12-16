@@ -343,6 +343,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
 
                                                 packet.setThingyId(thingyid); //TODO GET NUMBER
                                                 mClhAdvertiser.addAdvPacketToBuffer(packet, true); //JAAP added the ack
+                                                Log.i("JAAP", "sending packet to sink!");
                                                 transmissionAttempt++;
                                                 ackreceived = mClhScanner.getLastAck();
 
@@ -710,6 +711,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                         mClhLog.append(Arrays.toString(data));
                         mClhLog.append("\r\n");
                         procList.remove(0);
+                        Log.i("JAAP", "Recieved a message as sink in soundfragment.java!");
                     }
                 }
             }

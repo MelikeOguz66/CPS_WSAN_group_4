@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private ImageView mHeaderToggle;
     private RelativeLayout mNoThingyConnectedContainer;
 
-    private ArrayList<BluetoothDevice> mConnectedBleDeviceList;
+    ArrayList<BluetoothDevice> mConnectedBleDeviceList;
 
     private BluetoothDevice mDevice;
     private BluetoothDevice mOldDevice;
@@ -185,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private String mFragmentTag = ENVIRONMENT_FRAGMENT;
     private boolean isHeaderExpanded = true;
 
-    private DatabaseHelper mDatabaseHelper;
+    DatabaseHelper mDatabaseHelper;
     private ThingySdkManager mThingySdkManager;
     private ColorStateList mColorStateList;
     private Drawable mNavigationViewBackground;
@@ -207,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private ImageView mBatteryLevelImg;
     private NFCTagFoundDialogFragment mNfcTagFoundDialogFragment;
 
-    private ThingyListener mThingyListener = new ThingyListener() {
+    ThingyListener mThingyListener = new ThingyListener() {
         @Override
         public void onDeviceConnected(BluetoothDevice device, int connectionState) {
             final String deviceName = mDatabaseHelper.getDeviceName(device.getAddress());
@@ -216,7 +216,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (!mConnectedBleDeviceList.contains(device)) {
                 mConnectedBleDeviceList.add(device);
             }
-
             updateUiOnDeviceConnected(device);
         }
 
@@ -1242,7 +1241,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    private void updateUiOnDeviceConnected(final BluetoothDevice device) {
+    void updateUiOnDeviceConnected(final BluetoothDevice device) {
         final List<BluetoothDevice> connectedDevices = new ArrayList<>();
         connectedDevices.addAll(mThingySdkManager.getConnectedDevices());
         final ArrayList<Thingy> savedDevices = mDatabaseHelper.getSavedDevices();

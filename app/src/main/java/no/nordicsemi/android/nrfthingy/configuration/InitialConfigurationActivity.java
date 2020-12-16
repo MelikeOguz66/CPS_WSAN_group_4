@@ -686,6 +686,10 @@ public class InitialConfigurationActivity extends AppCompatActivity implements S
         Log.i("Martijn", "onDeviceSelected");
         if (mThingySdkManager != null) {
             mThingySdkManager.connectToThingy(this, device, ThingyService.class);
+            // Added these lines, necessary?
+            final Thingy thingy = new Thingy(device);
+            mThingySdkManager.setSelectedDevice(device);
+            updateSelectionInDb(thingy, true);
         }
         mDevice = device;
         getStarted(); // added this line

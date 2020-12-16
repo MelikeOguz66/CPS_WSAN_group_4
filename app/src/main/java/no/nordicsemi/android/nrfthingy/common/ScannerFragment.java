@@ -286,6 +286,8 @@ public class ScannerFragment extends DialogFragment {
                 });
             }
 
+            //TODO enable remcos part
+            /*
 
             //connects a maximum of 4 highest signal strength thingies
             //makes sure that there are no more than 4 connected at the same time
@@ -297,7 +299,7 @@ public class ScannerFragment extends DialogFragment {
                 ((InitialConfigurationActivity)getActivity()).getStarted();
             }
 
-
+*/
 
 
 

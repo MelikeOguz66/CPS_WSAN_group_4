@@ -59,7 +59,7 @@ public class ThingyListenerHelper {
     public static class ThingyBroadcastReceiver extends BroadcastReceiver {
 
         private ThingyListener mGlobalThingyListener;
-        private Map<BluetoothDevice, ThingyListener> mListeners = new HashMap<>();
+        Map<BluetoothDevice, ThingyListener> mListeners = new HashMap<>();
 
         public void setThingyListener(final ThingyListener listener) {
             this.mGlobalThingyListener = listener;

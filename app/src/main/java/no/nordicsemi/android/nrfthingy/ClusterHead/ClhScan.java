@@ -217,7 +217,7 @@ public class ClhScan {
             //Log.i(LOG_TAG," manufacturer value"+ Arrays.toString(manufacturerData.valueAt(0)) );
 
             clhAdvData.parcelAdvData(manufacturerData,0);
-            if(mIsSink)
+            if(mIsSink && clhAdvData.getDestinationID() == mClhID)
             {//if this Cluster Head is the Sink node (ID=0), add data to waiting process list
                     mClhProcessData.addProcessPacketToBuffer(clhAdvData);
                     Log.i(LOG_TAG, "Add data to process list, len:" + mClhProcDataList.size());
@@ -233,7 +233,7 @@ public class ClhScan {
                     mClhAdvertiser.addAdvPacketToBuffer(ack, true); //JAAP added the ack
 
             }
-            else if (clhAdvData.getDestinationID() == mClhID){//normal CLuster Head (ID 0..127) add data to advertising list to forward
+            else if (clhAdvData.getDestinationID() != mClhID){//normal CLuster Head (ID 0..127) add data to advertising list to forward
                     mClhAdvertiser.addAdvPacketToBuffer(clhAdvData,false);
                     Log.i(LOG_TAG, "Add data to advertised list, len:" + mClhAdvDataList.size());
                     Log.i(LOG_TAG, "Advertise list at " + (mClhAdvDataList.size() - 1) + ":"

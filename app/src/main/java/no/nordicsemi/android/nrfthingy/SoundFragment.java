@@ -324,10 +324,18 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                                             mThingySdkManager.setConstantLedMode(bluetoothDevice, 0, 255, 0);
                                             closestThingyAmplitude = 0;
                                             closestThingyID = "";
+                                            String string1 = closestThingyID.substring(closestThingyID.length()-1);
+                                            String string2 = closestThingyID.substring(closestThingyID.length()-2, closestThingyID.length()-1);
+                                            byte byte1 = Byte.parseByte(string1, 16);
+                                            byte byte2 = Byte.parseByte(string2, 16);
+                                            byte result = (byte) ((byte2 << 4) + byte1);
+
+
+                                            byte thingyid = result;
                                             //TODO SEND PACKET TO SINK
                                             int transmissionAttempt = 0;
-                                            while (transmissionAttempt < 4 && ackreceived.getSequence() != sequencenumber && ackreceived.getDestinationID() != mClhID) {
-                                                sequencenumber++;
+                                            sequencenumber++;
+                                            while (transmissionAttempt < 4 && ackreceived != null && ackreceived.getSequence() != sequencenumber && ackreceived.getThingyId() == thingyid) {
                                                 ClhAdvertisedData packet = new ClhAdvertisedData();
                                                 packet.setSourceID((byte) mClhID);
                                                 packet.setDestId((byte) 0);
@@ -335,23 +343,19 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                                                 packet.setThingyDataType((byte) 0);
                                                 packet.setSequence((byte) sequencenumber);
                                                 //packet.setSoundPower(100);
-                                                String string1 = closestThingyID.substring(closestThingyID.length()-2);
 
-                                                char char1 = closestThingyID.charAt(closestThingyID.length()-1);
-                                                char char2 = closestThingyID.charAt(closestThingyID.length()-2);
-                                                byte thingyid = Byte.parseByte(string1);
 
                                                 packet.setThingyId(thingyid); //TODO GET NUMBER
                                                 mClhAdvertiser.addAdvPacketToBuffer(packet, true); //JAAP added the ack
                                                 Log.i("JAAP", "sending packet to sink!");
                                                 transmissionAttempt++;
-                                                ackreceived = mClhScanner.getLastAck();
 
                                                 try {
                                                     Thread.sleep(500);
                                                 } catch (InterruptedException e) {
                                                     e.printStackTrace();
                                                 }
+                                                ackreceived = mClhScanner.getLastAck();
                                             }
                                             if (transmissionAttempt >= 4) {
                                                 Log.i("JAAP", "too many transmissions");

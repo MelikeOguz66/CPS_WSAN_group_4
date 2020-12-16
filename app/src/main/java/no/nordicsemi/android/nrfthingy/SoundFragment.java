@@ -712,7 +712,7 @@ public class SoundFragment extends Fragment implements PermissionRationaleDialog
                     for (int i = 0; i < procList.size(); i++) {
                         if (i == 10) break; //just display 10 line in one cycle
                         byte[] data = procList.get(0).getParcelClhData();
-                        mClhLog.append(Arrays.toString(data));
+                        mClhLog.append( "an event happened at: " + procList.get(0).getSourceID() + "with thingyID: " + procList.get(0).getThingyId());
                         mClhLog.append("\r\n");
                         procList.remove(0);
                         Log.i("JAAP", "Recieved a message as sink in soundfragment.java!");
